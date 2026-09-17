@@ -81,18 +81,18 @@ const btn = this.addWidget("button", "open_in_viewer", null, () => {
             body: JSON.stringify({ path: fp })
         });
     }
-}, { serialize: false, canvasOnly: true });
+}, { serialize: false });
 
 btn.label = hasFile ? "Open in Viewer" : "No image";
 ```
 
-- **Опция `canvasOnly: true`** — кнопка рисуется на canvas, а не как DOM-элемент. Визуально идентична стандартной кнопке загрузки ComfyUI.
-- **Текст кнопки:** меняется динамически. Пока файла нет — `"No image"`, после генерации — `"Open in Viewer"`.
+- Без `canvasOnly: true` в Nodes 2.0 — кнопка рендерится как обычный виджет.
+- **Текст кнопки:** меняется через `btn.label` (не `textContent`). `onExecuted` обновляет `this._openBtn.label = "Open in Viewer"` после генерации изображения.
 - **Персистентность:** `full_path` сохраняется в `node.properties._last_path` (сериализуется в workflow JSON). После загрузки воркфлоу `onNodeCreated` проверяет `properties._last_path` и устанавливает `btn.label = "Open in Viewer"`.
 - **Клик:** `fetch → POST /custom_node_images/open_file` → серверный `os.startfile(filepath)`.
 - **Жизненный цикл:**
   - `onNodeCreated` — `this.addWidget("button", ...)`, проверка `_last_path` в properties.
-  - `onExecuted` — сохранение `_images` и `this.properties._last_path`, `btn.label = "Open in Viewer"`.
+  - `onExecuted` — сохранение `_images` и `this.properties._last_path`, обновление `this._openBtn.label`.
   - `onRemoved` — `delete this._images`, `delete this._openBtn`.
 
 ## 6. Известные проблемы и история решений
@@ -105,7 +105,7 @@ btn.label = hasFile ? "Open in Viewer" : "No image";
 | **v2** ❌ | `onDrawForeground` + `onMouseDown` | Image-виджет перехватывает клики |
 | **v3** ❌ | Floating DOM button (`position:fixed`, RAF) | Не вписывается в UI ноды |
 | **v4** ❌ | `addCustomWidget` с самописным `draw` | Не совпадает визуально с native-виджетами, сложная реализация `mouse()` |
-| **v5** ✅ | `this.addWidget("button", ..., {canvasOnly: true})` | **Идентична стандартной кнопке LoadImage** |
+| **v5** ✅ | `this.addWidget("button", ...)` без `canvasOnly` в Nodes 2.0 | Кнопка как обычный виджет; текст обновляется через `label`, не `textContent` |
 
 ### 6.2. Кнопка пропадает после переключения воркфлоу ✅ ИСПРАВЛЕНО
 
@@ -118,6 +118,10 @@ btn.label = hasFile ? "Open in Viewer" : "No image";
 ### 6.4. Нет локализации
 
 Нет папки `locales/`, нет поддержки RU/EN. Надпись на кнопке — английская.
+
+### 6.5. Текст кнопки не обновлялся после генерации ✅ ИСПРАВЛЕНО
+
+`onExecuted` использовал `textContent`, но LiteGraph/ComfyUI для виджетов кнопки читает `label`. Решение: заменить на `this._openBtn.label = "Open in Viewer"`. Без этого кнопка оставалась на `"No image"` после выполнения ноды.
 
 ## 7. Совместимость с ComfyUI v0.27+
 

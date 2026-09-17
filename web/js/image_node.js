@@ -1,5 +1,9 @@
 const { app } = window.comfyAPI.app;
 
+// Markeer assembly — F12 console
+const IMG_JS_VERSION = "1.04-native-button";
+console.log(`[Custom_node_Images] JS ${IMG_JS_VERSION} loaded`);
+
 function setWidgetDisabled(w, val) {
     if (w.options) w.options.disabled = val;
     try { w.disabled = val; } catch (e) {}
@@ -18,6 +22,7 @@ app.registerExtension({
         nodeType.prototype.onNodeCreated = function () {
             const ret = origOnCreated?.apply(this, arguments);
 
+            // Preview toggle — скрытие prefix в Preview-режиме
             const previewToggle = this.widgets?.find(w => w.name === "preview_mode");
             const prefixWidget = this.widgets?.find(w => w.name === "filename_prefix");
 
@@ -35,9 +40,10 @@ app.registerExtension({
                 };
             }
 
-            const hasFile = !!(this._images?.[0]?.full_path || this.properties?._last_path);
-
-            const btn = this.addWidget("button", "open_in_viewer", null, () => {
+            // Кнопка "Open in Viewer" — нативный виджет-кнопка (как в LoadImage).
+            // canvasOnly: true НЕ работает в Nodes 2.0 (Vue) — кнопка не рендерится.
+            // Пробуем БЕЗ canvasOnly — кнопка рисуется как обычный виджет.
+            const openBtn = this.addWidget("button", "open_in_viewer", null, () => {
                 const fp = this._images?.[0]?.full_path || this.properties?._last_path;
                 if (fp) {
                     fetch("/custom_node_images/open_file", {
@@ -48,10 +54,9 @@ app.registerExtension({
                         if (!r.ok) console.warn("open_file failed", r.status);
                     }).catch(err => console.warn("open_file error", err));
                 }
-            }, { serialize: false, canvasOnly: true });
-
-            btn.label = hasFile ? "Open in Viewer" : "No image";
-            this._openBtn = btn;
+            }, { serialize: false });
+            openBtn.label = this.properties?._last_path ? "Open in Viewer" : "No image";
+            this._openBtn = openBtn;
 
             return ret;
         };
