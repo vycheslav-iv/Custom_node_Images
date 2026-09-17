@@ -86,7 +86,7 @@ class SavePreviewImage:
         if preview_mode:
             output_dir = self.temp_dir
             self.type = "temp"
-            prefix_append = "_temp_" + ''.join(random.choice("abcdefghijklmnopqrstupvxyz") for x in range(5))
+            prefix_append = "_temp_" + ''.join(random.choice("abcdefghijklmnopqrstuvwxyz") for x in range(5))
             full_prefix = prefix_append
             compress_level = 1
         else:
