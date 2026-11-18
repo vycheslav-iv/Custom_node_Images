@@ -1,0 +1,10 @@
+{
+  "checks": [
+    {
+      "label": "логика ноды (Python-песочница)",
+      "cmd": "python tests/_test_image_node.py",
+      "expect": ["FAIL: 0", "ТЕСТ ПРОЙДЕН"],
+      "description": "режимы preview/save (папка, сжатие, префикс), нумерация батча, метаданные PNG и disable_metadata, контракт узла; API-роут: 400/403 (в т.ч. обход ..)/404/200/500 и защита пути за пределы output/temp"
+    }
+  ]
+}
